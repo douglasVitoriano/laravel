@@ -14,3 +14,6 @@
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/residuos', 'ResiduosController@index');
+Route::post('/residuos/import', 'ResiduosController@import');
