@@ -34,7 +34,7 @@ class ResiduosImport implements ToCollection
         }
         
         DB::beginTransaction();
-        
+
         try {
             foreach($array_comb as $insert){            
                 $resp = Residuos::create($insert);
@@ -51,6 +51,6 @@ class ResiduosImport implements ToCollection
             abort(500,'Erro ao inserir os dados! '. $e);
         }
 
-        return $this;
+        return "success";
     }    
 }

@@ -15,7 +15,7 @@ class ResiduosController extends Controller
         
         $data = $residuos->orderBy('nome')->get();
         
-        return view('residuos', compact('data'));
+        return new Response(json_encode($data) , 200);
     }
 
     public function import(Request $request){
@@ -26,8 +26,12 @@ class ResiduosController extends Controller
         $path = $request->file('select_file')->getRealPath();
         
         $data = Excel::import(new ResiduosImport, $path);
-       
-        return back()->with('success', 'Dados do Excel Importado com sucesso! ');
+
+        if(!$data === "success"){
+            return new Response(json_encode($data) , 500);
+        }
+
+        return new Response(json_encode('Dados do Excel Importado com sucesso!') , 200);
     }   
 
     /**    
@@ -38,10 +42,22 @@ class ResiduosController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $data = $request->all();
-        Residuos::whereId($id)->update($data);
+        DB::beginTransaction();
 
-        return redirect('/residuos')->with('success', 'Update realizado com sucesso!');
+        try {
+
+            $data = $request->all();
+            $resp = Residuos::whereId($id)->update($data);
+            if(!$resp){                                     
+                abort(500,'Erro ao atualizar os dados!');
+            }
+            DB::commit();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            abort(500,'Erro ao inserir os dados! '. $e);
+        }
+        return new Response(json_encode('Update realizado com sucesso!') , 200);
     }
 
     /**
@@ -50,11 +66,25 @@ class ResiduosController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy(Request $request, $id)
-    {        
-        $show = Residuos::findOrFail($id);
-        $show->delete();
+    {     
+        DB::beginTransaction();
 
-        return redirect('/residuos')->with('success', 'Delete realizado com sucesso!');
+        try {
+            $residuos = Residuos::findOrFail($id);
+            $resp = $residuos->delete();
+
+            if(!$resp){                                     
+                abort(500,'Erro ao atualizar os dados!');
+            }
+
+            DB::commit();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            abort(500,'Erro ao inserir os dados! '. $e);
+        }
+
+        return new Response(json_encode('Delete realizado com sucesso!') , 200);
     }
     
 }
