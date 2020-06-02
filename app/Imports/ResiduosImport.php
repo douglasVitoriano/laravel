@@ -3,105 +3,54 @@
 namespace App\Imports;
 
 use App\Entities\Residuos;
-use Illuminate\Support\Facades\Hash;
-use Maatwebsite\Excel\Concerns\ToModel;
-
-use Maatwebsite\Excel\Concerns\WithMappedCells;
-
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
-
-use Maatwebsite\Excel\Validators\Failure;
-use Maatwebsite\Excel\Validators\ValidationException;
-use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\RegistersEventListeners;
-use Maatwebsite\Excel\Events\BeforeImport;
-use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use DB;
 
-class ResiduosImport implements ToModel, WithValidation, WithHeadingRow, WithEvents
+class ResiduosImport implements ToCollection
 {
-    use Importable, RegistersEventListeners;
-
-    public static function beforeImport(BeforeImport $event)
-    {
-        // $worksheet = $event->reader->getActiveSheet();
-        // $highestRow = $worksheet->getHighestRow(); 
-        // $highestColumn      = $worksheet->getHighestColumn();       
+    public function collection(Collection $rows)
+    {           
+        $array_value=[]; 
+        $array_comb=[];          
+        foreach ($rows as $row => $value) 
+        {
+            if(!is_null($value[$row])){
+                if (in_array("Nome Comum do Resíduo", $value->toArray())) { 
+                    continue;
+                }else{
+                    foreach($value as $key => $data){
+                        if(!is_null($data)){
+                            $array_value[$row][$key] = $data;
+                        }                        
+                    }                    
+                }
+            }          
+        }
+        foreach($array_value as $k => $v ){
+            $a = array(1 => 'nome',2 => 'tipo',3 => 'categoria',4 => 'tecnologia_tratamento',5 => 'classe',6 => 'un',7 => 'peso');
+            $b = $array_value[$k];
+            $array_comb[$k] = array_combine($a, $b);
+        }
         
-        // if ($highestRow < 2) {
-        //     $error = \Illuminate\Validation\ValidationException::withMessages([]);
-        //     $failure = new Failure(1, 'rows', [0 => 'Now enough rows!']);
-        //     $failures = [0 => $failure];
-        //     throw new ValidationException($error, $failures);
-        // }
+        DB::beginTransaction();
         
-        // foreach ($worksheet->getRowIterator() as $row) {
-           
-        //     $cellIterator = $row->getCellIterator();
-        //     $cellIterator->setIterateOnlyExistingCells(FALSE); 
-            
-        //     foreach ($cellIterator as $cell) {
-                
-        //             //  $cell->getValue() ;
-        //             if(!is_null($cell->getValue())){
-        //                 dd("tefsfgsdfgsdf", $cell->getValue());
-        //             }
-                     
-        //     }
-           
-        // }
-       
-    }
+        try {
+            foreach($array_comb as $insert){            
+                $resp = Residuos::create($insert);
 
-    // public function mapping(): array
-    // {
-    //     return [
-    //         'nome'                  => 'B6',           
-    //         'tipo'                  => 'C6',
-    //         'categoria'             => 'D6',
-    //         'tecnologia_tratamento' => 'E6',
-    //         'classe'                => 'F6',
-    //         'un'                    => 'G6',
-    //         'peso'                  => 'H6',
-    //     ];
-    // }
+                if(!$resp){                                     
+                    abort(500,'Erro ao inserir os dados!');
+                }
+            }
 
-    /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
-    public function model(array $row)
-    {
-       
-        return new Residuos([
-            'nome'                  => $row['nome'],
-            'tipo'                  => $row['tipo'],
-            'categoria'             => $row['Categoria'],
-            'tecnologia_tratamento' => $row['tecnologia_tratamento'],
-            'classe'                => $row['classe'],
-            'un'                    => $row['un'],
-            'peso'                  => $row['peso'],
+            DB::commit();
 
-        ]);
-    }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            abort(500,'Erro ao inserir os dados! '. $e);
+        }
 
-    // public function sheets(): array
-    // {
-       
-    //     return [
-    //         0 => new Residuos(),
-    //     ];
-    // }
-
-    public function rules(): array
-    {
-        return [
-        ];
-    }
+        return $this;
+    }    
 }

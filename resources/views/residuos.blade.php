@@ -74,7 +74,7 @@
         <br />
         @if(count($errors) > 0)
             <div class="alert alert-danger">
-            Erro de validação de upload!<br><br>
+            Erro ao validar upload!<br><br>
             <ul>
             @foreach($errors->all() as $error)
             <li>{{ $error }}</li>
@@ -123,6 +123,7 @@
      <div class="table-responsive">
       <table class="table table-bordered table-striped">
       <tr>
+        <th>ID</th>
         <th>Nome</th>
         <th>Tipo</th>
         <th>Categoria</th>
@@ -133,6 +134,7 @@
        </tr>
        @foreach($data as $row)
        <tr>
+        <td>{{ $row->id }}</td>
         <td>{{ $row->nome }}</td>
         <td>{{ $row->tipo }}</td>
         <td>{{ $row->categoria }}</td>

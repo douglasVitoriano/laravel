@@ -17,3 +17,5 @@ Route::get('/', function () {
 
 Route::get('/residuos', 'ResiduosController@index');
 Route::post('/residuos/import', 'ResiduosController@import');
+Route::put('/residuos/update/{id}', 'ResiduosController@update');
+Route::delete('/residuos/delete/{id}', 'ResiduosController@destroy');
